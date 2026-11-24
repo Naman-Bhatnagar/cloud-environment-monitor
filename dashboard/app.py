@@ -299,11 +299,16 @@ def technician_action():
 def logout():
     session.clear()
 
+    app_url = os.getenv(
+        "APP_BASE_URL",
+        "http://localhost:5000"
+    ).rstrip("/")
+
     logout_url = (
         f"{COGNITO_DOMAIN}/logout?"
         + urlencode({
             "client_id": COGNITO_CLIENT_ID,
-            "logout_uri": "http://localhost:5000/login"
+            "logout_uri": f"{app_url}/login"
         })
     )
 
