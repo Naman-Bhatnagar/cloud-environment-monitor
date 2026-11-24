@@ -1,0 +1,135 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technician Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <header>
+        <div>
+            <h1>Server Room Monitoring</h1>
+            <p>Technician Dashboard</p>
+        </div>
+        <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+    </header>
+
+    <main class="dashboard">
+
+        <h2>Incident Management</h2>
+
+        <p class="description">
+            Review environmental alerts, acknowledge incidents and record maintenance work.
+        </p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="flash-message {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endwith %}
+
+        {% for incident in incidents %}
+
+        <section class="panel incident-card">
+
+            <h2>{{ incident.device_id }} — {{ incident.status }}</h2>
+
+            <p><strong>Device:</strong> {{ incident.device_id }}</p>
+            <p><strong>Alert Type:</strong> {{ incident.alert_type }}</p>
+            <p><strong>Temperature:</strong> {{ incident.temperature }} °C</p>
+
+            <p>
+                <strong>Status:</strong>
+                <span class="status {{ incident.status|lower }}">
+                    {{ incident.status }}
+                </span>
+            </p>
+
+            <p>
+                <strong>Acknowledgement:</strong>
+                {{ "Acknowledged" if incident.acknowledged else "Pending" }}
+            </p>
+
+            {% if incident.acknowledged_at %}
+                <p><strong>Acknowledged at:</strong> {{ incident.acknowledged_at }}</p>
+            {% endif %}
+
+            <div class="report-section">
+                <h3>Maintenance Report</h3>
+
+                {% if incident.report %}
+                    <p>{{ incident.report }}</p>
+                {% else %}
+                    <p>No maintenance report submitted yet.</p>
+                {% endif %}
+            </div>
+
+            <div class="incident-actions">
+
+                {% if not incident.acknowledged %}
+                <form method="POST" action="{{ url_for('technician_action') }}">
+                    <input type="hidden" name="action" value="ACKNOWLEDGE">
+                    <input type="hidden" name="device_id" value="{{ incident.device_id }}">
+                    <button type="submit">Acknowledge Incident</button>
+                </form>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('technician_action') }}">
+                    <input type="hidden" name="action" value="SUBMIT_REPORT">
+                    <input type="hidden" name="device_id" value="{{ incident.device_id }}">
+
+                    <label for="report-{{ loop.index }}">Maintenance report</label>
+                    <textarea
+                        id="report-{{ loop.index }}"
+                        name="report"
+                        rows="4"
+                        placeholder="Describe your inspection and maintenance work..."
+                        required
+                    ></textarea>
+
+                    <button type="submit">Submit Report</button>
+                </form>
+
+                <form method="POST" action="{{ url_for('technician_action') }}">
+                    <input type="hidden" name="action" value="RESOLVE">
+                    <input type="hidden" name="device_id" value="{{ incident.device_id }}">
+
+                    <label for="resolution-{{ loop.index }}">Resolution note</label>
+                    <textarea
+                        id="resolution-{{ loop.index }}"
+                        name="resolution_note"
+                        rows="3"
+                        placeholder="Explain how the incident was resolved..."
+                        required
+                    ></textarea>
+
+                    <button type="submit" class="resolve-button">
+                        Resolve Incident
+                    </button>
+                </form>
+
+            </div>
+
+        </section>
+
+        {% else %}
+
+        <section class="panel">
+            <p>No active incidents. Everything looks good!</p>
+        </section>
+
+        {% endfor %}
+
+    </main>
+
+    <!-- Automatic Dashboard Refresh -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>

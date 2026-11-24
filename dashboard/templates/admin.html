@@ -1,0 +1,377 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrator Dashboard</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <meta http-equiv="refresh" content="10">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            min-width: 0;
+        }
+
+        .chart-card h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 280px;
+        }
+
+        @media (max-width: 768px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div>
+            <h1>Server Room Monitoring</h1>
+            <p>Administrator Dashboard</p>
+        </div>
+
+        <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+    </header>
+
+    <main class="dashboard">
+
+        <h2>System Overview</h2>
+
+        <section class="stats">
+
+            <div class="stat-card">
+                <h3>Total Readings</h3>
+                <p>{{ total_readings }}</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>Active Incidents</h3>
+                <p>{{ active_incident_count }}</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>System Status</h3>
+                <p>Monitoring</p>
+            </div>
+
+        </section>
+
+        <!-- Environmental Monitoring Charts -->
+        <section class="panel">
+
+            <h2>Environmental Monitoring Trends</h2>
+
+            <div class="chart-grid">
+
+                <div class="chart-card">
+                    <h3>Temperature Over Time</h3>
+                    <div class="chart-container">
+                        <canvas id="temperatureChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3>Humidity Over Time</h3>
+                    <div class="chart-container">
+                        <canvas id="humidityChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3>Server Workload Over Time</h3>
+                    <div class="chart-container">
+                        <canvas id="workloadChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3>Cooling Level Over Time</h3>
+                    <div class="chart-container">
+                        <canvas id="coolingChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- Environmental Readings -->
+        <section class="panel">
+
+            <h2>Environmental Readings</h2>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Device</th>
+                            <th>Temperature</th>
+                            <th>Humidity</th>
+                            <th>Workload</th>
+                            <th>Cooling</th>
+                            <th>Status</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for reading in readings %}
+                        <tr>
+                            <td>{{ reading.device_id }}</td>
+                            <td>{{ reading.temperature }} °C</td>
+                            <td>{{ reading.humidity }}%</td>
+                            <td>{{ reading.workload }}%</td>
+                            <td>{{ reading.cooling_level }}%</td>
+                            <td>
+                                <span class="status {{ reading.status|lower }}">
+                                    {{ reading.status }}
+                                </span>
+                            </td>
+                            <td>{{ reading.timestamp }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7">No readings available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+        <!-- Active Incident Records -->
+        <section class="panel">
+
+            <h2>Active Incident Records</h2>
+
+            {% for incident in incidents %}
+            <div class="incident-card">
+
+                <h3>{{ incident.device_id }} — {{ incident.status }}</h3>
+
+                <p>
+                    <strong>Alert Type:</strong>
+                    {{ incident.alert_type }}
+                </p>
+
+                <p>
+                    <strong>Temperature:</strong>
+                    {{ incident.temperature }} °C
+                </p>
+
+                <p>
+                    <strong>Acknowledged:</strong>
+                    {{ "Yes" if incident.acknowledged else "No" }}
+                </p>
+
+                {% if incident.acknowledged_at %}
+                <p>
+                    <strong>Acknowledged At:</strong>
+                    {{ incident.acknowledged_at }}
+                </p>
+                {% endif %}
+
+                <p>
+                    <strong>Technician Report:</strong>
+                    {{ incident.report or "No report submitted" }}
+                </p>
+
+            </div>
+            {% else %}
+                <p>No active incidents recorded.</p>
+            {% endfor %}
+
+        </section>
+
+        <!-- Incident History -->
+        <section class="panel">
+
+            <h2>Incident History</h2>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Device</th>
+                            <th>Alert Type</th>
+                            <th>Temperature</th>
+                            <th>Status</th>
+                            <th>Acknowledged</th>
+                            <th>Maintenance Report</th>
+                            <th>Resolution Note</th>
+                            <th>Resolved At</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for incident in incident_history %}
+                        <tr>
+                            <td>{{ incident.device_id }}</td>
+                            <td>{{ incident.alert_type }}</td>
+                            <td>{{ incident.temperature }} °C</td>
+
+                            <td>
+                                <span class="status normal">
+                                    {{ incident.status }}
+                                </span>
+                            </td>
+
+                            <td>
+                                {{ "Yes" if incident.acknowledged else "No" }}
+                            </td>
+
+                            <td>
+                                {{ incident.report or "No report submitted" }}
+                            </td>
+
+                            <td>
+                                {{ incident.resolution_note or "No resolution note" }}
+                            </td>
+
+                            <td>
+                                {{ incident.resolved_at or incident.resolved_timestamp or "N/A" }}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8">No incident history available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Chart.js Configuration -->
+    <script>
+        const chartData = {{ readings | tojson }};
+
+        // Reverse readings so charts display oldest to newest
+        const chartReadings = [...chartData].reverse();
+
+        const labels = chartReadings.map(reading => {
+            const date = new Date(reading.timestamp);
+            return date.toLocaleTimeString();
+        });
+
+        function createChart(canvasId, label, field, unit) {
+
+            const canvas = document.getElementById(canvasId);
+
+            if (!canvas || chartReadings.length === 0) {
+                return;
+            }
+
+            const values = chartReadings.map(reading =>
+                Number(reading[field])
+            );
+
+            new Chart(canvas, {
+                type: 'line',
+
+                data: {
+                    labels: labels,
+
+                    datasets: [{
+                        label: label,
+                        data: values,
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointRadius: 2,
+                        fill: false
+                    }]
+                },
+
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+
+                    plugins: {
+                        legend: {
+                            display: true
+                        }
+                    },
+
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        },
+
+                        y: {
+                            title: {
+                                display: true,
+                                text: unit
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        createChart(
+            'temperatureChart',
+            'Temperature',
+            'temperature',
+            'Temperature (°C)'
+        );
+
+        createChart(
+            'humidityChart',
+            'Humidity',
+            'humidity',
+            'Humidity (%)'
+        );
+
+        createChart(
+            'workloadChart',
+            'Workload',
+            'workload',
+            'Workload (%)'
+        );
+
+        createChart(
+            'coolingChart',
+            'Cooling Level',
+            'cooling_level',
+            'Cooling (%)'
+        );
+
+    </script>
+
+</body>
+</html>
