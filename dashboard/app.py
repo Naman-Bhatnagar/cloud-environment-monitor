@@ -70,7 +70,7 @@ def get_readings():
     try:
         response = requests.get(
             READINGS_API_URL,
-            params={"device_id": "server_room_001", "limit": 50},
+            params={"device_id": "server_room_001", "limit": 500},
             timeout=10
         )
         response.raise_for_status()
@@ -299,16 +299,11 @@ def technician_action():
 def logout():
     session.clear()
 
-    app_url = os.getenv(
-        "APP_BASE_URL",
-        "http://localhost:5000"
-    ).rstrip("/")
-
     logout_url = (
         f"{COGNITO_DOMAIN}/logout?"
         + urlencode({
             "client_id": COGNITO_CLIENT_ID,
-            "logout_uri": f"{app_url}/login"
+            "logout_uri": "http://localhost:5000/login"
         })
     )
 
